@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Acesso</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        background-color: #c1d3ef;
+        padding: 10px;
+    }
+    .container {
+        background: #cde3cd;
+        padding: 20px;
+        max-width: 100%;
+        margin: auto;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+        text-align: center;
+        color: #00695c;
+        margin-bottom: 20px;
+        font-size: 20px;
+    }
+    .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .camera-section, .form-section, .vehicle-section, .destination-section {
+        background: #fafafa;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .camera-section {
+        text-align: center;
+    }
+    video {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+        object-fit: cover;
+        border-radius: 10px;
+        background: #000;
+    }
+    button.capture, button.action, button.switch {
+        background: #00695c;
+        color: white;
+        padding: 10px;
+        margin: 5px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    button.capture:hover, button.action:hover, button.switch:hover {
+        background: #004d40;
+    }
+    label {
+        display: block;
+        margin-top: 10px;
+        font-weight: bold;
+        font-size: 13px;
+    }
+    input, select, textarea {
+        width: 100%;
+        padding: 8px;
+        margin-top: 3px;
+        border: 1px solid #2cbb22;
+        border-radius: 5px;
+        font-size: 13px;
+    }
+    textarea {
+        resize: vertical;
+    }
+    table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+    table, th, td {
+        border: 1px solid #1b1a1a;
+    }
+    th {
+        background: #00695c;
+        color: white;
+        padding: 6px;
+    }
+    td {
+        padding: 6px;
+        text-align: center;
+    }
+    img.captured {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    @media screen and (min-width: 768px) {
+        .form-grid {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        .form-section, .camera-section, .vehicle-section, .destination-section {
+            flex: 1;
+            min-width: 300px;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div style="text-align: right; margin-bottom: 10px;">
+        <button class="switch" onclick="showCadastro()">Cadastro</button>
+        <button class="switch" onclick="showRelatorio()">Relatórios</button>
+    </div>
+
+    <div id="cadastroSection">
+        <h1>CADASTRO DE VISITANTES - CONTROLE</h1>
+        <form id="accessForm">
+            <div class="form-grid">
+                <div class="camera-section">
+                    <video id="video" autoplay playsinline muted></video><br>
+                    <button type="button" class="capture" onclick="takePhoto()">Capturar Foto</button>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                </div>
+                <div class="form-section">
+                    <label>Documento (CPF ou Passaporte):</label>
+                    <input type="text" id="document" required>
+                    <label>Nome Completo:</label>
+                    <input type="text" id="fullName" required>
+                    <label>Tipo de Visitante:</label>
+                    <select id="visitorType" required>
+                        <option value="">Selecione</option>
+                        <option>Entregador</option>
+                        <option>Visitante</option>
+                        <option>Prestador de Serviço</option>
+                        <option>Prestador de Obra</option>
+                        <option>Mercado Livre</option>
+                    </select>
+                    <label>Empresa:</label>
+                    <input type="text" id="company">
+                </div>
+            </div>
+            <div class="form-grid" style="margin-top: 20px;">
+                <div class="vehicle-section">
+                    <h3>Veículo</h3>
+                    <label>Marca/Modelo:</label>
+                    <input type="text" id="vehicleModel">
+                    <label>Placa:</label>
+                    <input type="text" id="vehiclePlate">
+                    <label>Cor do Veículo:</label>
+                    <input type="text" id="vehicleColor">
+                </div>
+                <div class="destination-section">
+                    <h3>Destino e Observações</h3>
+                    <label>Destino:</label>
+                    <input type="text" id="destination" required>
+                    <label>Observações:</label>
+                    <textarea id="observation"></textarea>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="submit" class="action">Registrar Acesso</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="relatorioSection" style="display: none;">
+        <h1>Relatório de Acessos</h1>
+        <div style="text-align: right; margin-bottom: 10px;">
+            <button class="action" onclick="downloadPDF()">Imprimir em PDF</button>
+        </div>
+        <table id="accessTable">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Documento</th>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Destino</th>
+                    <th>Veículo</th>
+                    <th>Observações</th>
+                    <th>Data/Hora</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+<script>
+let accessData = [];
+let capturedPhoto = "";
+
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(stream => { video.srcObject = stream; })
+    .catch(err => { alert("Erro ao acessar a câmera: " + err.message); });
+
+function takePhoto() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    capturedPhoto = canvas.toDataURL('image/png');
+}
+
+document.getElementById('accessForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!capturedPhoto) {
+        alert("Por favor, capture uma foto antes de registrar!");
+        return;
+    }
+
+    const now = new Date();
+    const dateTime = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+    const entry = {
+        photo: capturedPhoto,
+        document: document.getElementById('document').value,
+        fullName: document.getElementById('fullName').value,
+        visitorType: document.getElementById('visitorType').value,
+        destination: document.getElementById('destination').value,
+        observation: document.getElementById('observation').value,
+        vehicleModel: document.getElementById('vehicleModel').value,
+        vehiclePlate: document.getElementById('vehiclePlate').value,
+        vehicleColor: document.getElementById('vehicleColor').value,
+        company: document.getElementById('company').value,
+        dateTime: dateTime
+    };
+
+    accessData.push(entry);
+    saveData();
+    addToTable(entry);
+    this.reset();
+    capturedPhoto = "";
+    alert("Registro salvo com sucesso!");
+});
+
+function addToTable(entry) {
+    const tbody = document.getElementById('accessTable').querySelector('tbody');
+    const row = tbody.insertRow();
+    row.innerHTML = `
+        <td><img class="captured" src="${entry.photo}"></td>
+        <td>${entry.document}</td>
+        <td>${entry.fullName}</td>
+        <td>${entry.visitorType}</td>
+        <td>${entry.destination}</td>
+        <td>${entry.vehicleModel} - ${entry.vehiclePlate} (${entry.vehicleColor})</td>
+        <td>${entry.observation}</td>
+        <td>${entry.dateTime}</td>
+    `;
+}
+
+function loadData() {
+    const data = JSON.parse(localStorage.getItem('accessData'));
+    if (data) {
+        accessData = data;
+        accessData.forEach(addToTable);
+    }
+}
+
+function saveData() {
+    localStorage.setItem('accessData', JSON.stringify(accessData));
+}
+
+function showCadastro() {
+    document.getElementById('cadastroSection').style.display = 'block';
+    document.getElementById('relatorioSection').style.display = 'none';
+}
+
+function showRelatorio() {
+    document.getElementById('cadastroSection').style.display = 'none';
+    document.getElementById('relatorioSection').style.display = 'block';
+    document.getElementById('accessTable').querySelector('tbody').innerHTML = '';
+    accessData.forEach(addToTable);
+}
+
+function downloadPDF() {
+    const element = document.getElementById('relatorioSection');
+    html2pdf().from(element).save('relatorio_acessos.pdf');
+}
+
+loadData();
+</script>
+</body>
+</html>
